@@ -4,6 +4,8 @@
 <dict>
 	<key>bundleid</key>
 	<string></string>
+	<key>category</key>
+	<string>Tools</string>
 	<key>connections</key>
 	<dict>
 		<key>2C99F6F1-EF16-4CF1-9762-5D05A1FFAA4D</key>
@@ -34,7 +36,7 @@
 		</array>
 	</dict>
 	<key>createdby</key>
-	<string>William</string>
+	<string>William Sun</string>
 	<key>description</key>
 	<string>Toggles the macOS function key mode.</string>
 	<key>disabled</key>
@@ -46,21 +48,21 @@
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>lastpathcomponent</key>
-				<false/>
-				<key>onlyshowifquerypopulated</key>
-				<true/>
-				<key>removeextension</key>
-				<false/>
+				<key>argumenttype</key>
+				<integer>2</integer>
+				<key>keyword</key>
+				<string>fn</string>
+				<key>subtext</key>
+				<string></string>
 				<key>text</key>
-				<string>{query}</string>
-				<key>title</key>
-				<string>Fn Toggle</string>
+				<string>Toggle Function Keys</string>
+				<key>withspace</key>
+				<false/>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.output.notification</string>
+			<string>alfred.workflow.input.keyword</string>
 			<key>uid</key>
-			<string>F6B96BCA-3FFD-4C09-A515-06ECF51640AE</string>
+			<string>2C99F6F1-EF16-4CF1-9762-5D05A1FFAA4D</string>
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
@@ -73,7 +75,7 @@
 				<integer>102</integer>
 				<key>script</key>
 				<string>-- Apple Script (i.e. Use in Apple's Script Editor Application) to Toggle Function Keys / Media keys on/off
--- Tested on MacOS Sonoma (14.2.1) Jan 2024, MacOS Monterey (12.6.2) July 2023, MacOS Ventura (13.4.1) July 2023
+-- Tested on MacOS Sequoia (15.0.1) October 2024, MacOS Sonoma (14.2.1) Jan 2024, MacOS Monterey (12.6.2) July 2023, MacOS Ventura (13.4.1) July 2023
 -- Project Path: https://github.com/MrSimonC/Toggle-Mac-Function-Keys
 
 set osver to system version of (system info)
@@ -189,21 +191,21 @@ end if</string>
 		<dict>
 			<key>config</key>
 			<dict>
-				<key>argumenttype</key>
-				<integer>2</integer>
-				<key>keyword</key>
-				<string>fn</string>
-				<key>subtext</key>
-				<string></string>
-				<key>text</key>
-				<string>Toggle Function Keys</string>
-				<key>withspace</key>
+				<key>lastpathcomponent</key>
 				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<true/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string>{query}</string>
+				<key>title</key>
+				<string>Fn Toggle</string>
 			</dict>
 			<key>type</key>
-			<string>alfred.workflow.input.keyword</string>
+			<string>alfred.workflow.output.notification</string>
 			<key>uid</key>
-			<string>2C99F6F1-EF16-4CF1-9762-5D05A1FFAA4D</string>
+			<string>F6B96BCA-3FFD-4C09-A515-06ECF51640AE</string>
 			<key>version</key>
 			<integer>1</integer>
 		</dict>
@@ -242,6 +244,6 @@ Using https://github.com/MrSimonC/Toggle-Mac-Function-Keys</string>
 	<key>version</key>
 	<string>1.0</string>
 	<key>webaddress</key>
-	<string></string>
+	<string>williamodinson.github.io</string>
 </dict>
 </plist>
