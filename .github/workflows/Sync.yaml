@@ -1,0 +1,118 @@
+name: Sync AppleScript and Release
+
+on:
+  schedule:
+    - cron: "0 0 1 * *"
+  workflow_dispatch:
+
+jobs:
+  sync-and-release:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Download and decompile source script
+        run: |
+          curl -L -o source.scpt "https://github.com/MrSimonC/Toggle-Mac-Function-Keys/raw/main/Toggle%20Function%20Keys.scpt"
+          osadecompile source.scpt > new_script.txt
+          echo "=== Extracted script ==="
+          head -5 new_script.txt
+          echo "..."
+          tail -3 new_script.txt
+
+      - name: Extract current script from info.plist
+        run: |
+          python3 << 'EOF'
+          import re
+
+          with open('info.plist', 'r', encoding='utf-8') as f:
+              content = f.read()
+
+          pattern = r'<key>script</key>\s*<string>(.*?)</string>'
+          match = re.search(pattern, content, re.DOTALL)
+
+          if match:
+              script = match.group(1)
+              script = script.replace('&lt;', '<').replace('&gt;', '>').replace('&amp;', '&')
+              with open('current_script.txt', 'w', encoding='utf-8') as f:
+                  f.write(script)
+          else:
+              print("ERROR: Could not extract current script")
+              exit(1)
+          EOF
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          if diff -q new_script.txt current_script.txt > /dev/null 2>&1; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "Script has changed:"
+            diff new_script.txt current_script.txt || true
+          fi
+
+      - name: Update info.plist with new script
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          python3 << 'EOF'
+          import re
+
+          with open('info.plist', 'r', encoding='utf-8') as f:
+              plist_content = f.read()
+
+          with open('new_script.txt', 'r', encoding='utf-8') as f:
+              new_script = f.read()
+
+          # Escape for XML while preserving Unicode
+          escaped_script = new_script.replace('&', '&amp;').replace('<', '&lt;').replace('>', '&gt;')
+
+          # Replace script content while preserving plist structure
+          pattern = r'(<key>script</key>\s*<string>)(.*?)(</string>)'
+
+          def replacer(m):
+              return m.group(1) + escaped_script + m.group(3)
+
+          updated_plist = re.sub(pattern, replacer, plist_content, count=1, flags=re.DOTALL)
+
+          with open('info.plist', 'w', encoding='utf-8') as f:
+              f.write(updated_plist)
+          EOF
+
+      - name: Create Alfred workflow package
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          zip -r Fn.Toggle.alfredworkflow README.md icon.png info.plist prefs.plist
+
+      - name: Get upstream commit info
+        if: steps.check_changes.outputs.changed == 'true'
+        id: upstream
+        run: |
+          COMMIT_MSG=$(curl -s "https://api.github.com/repos/MrSimonC/Toggle-Mac-Function-Keys/commits/main" | jq -r '.commit.message' | head -1)
+          COMMIT_SHA=$(curl -s "https://api.github.com/repos/MrSimonC/Toggle-Mac-Function-Keys/commits/main" | jq -r '.sha' | cut -c1-7)
+          echo "message=$COMMIT_MSG" >> $GITHUB_OUTPUT
+          echo "sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
+          echo "date=$(date +'%Y-%m-%d')" >> $GITHUB_OUTPUT
+
+      - name: Commit changes
+        if: steps.check_changes.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add info.plist
+          git commit -m "chore(sync): ${{ steps.upstream.outputs.message }}" -m "Upstream commit: MrSimonC/Toggle-Mac-Function-Keys@${{ steps.upstream.outputs.sha }}"
+          git push
+
+      - name: Create Release
+        if: steps.check_changes.outputs.changed == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.upstream.outputs.date }}
+          name: ${{ steps.upstream.outputs.message }}
+          body: |
+            Synced from [MrSimonC/Toggle-Mac-Function-Keys@${{ steps.upstream.outputs.sha }}](https://github.com/MrSimonC/Toggle-Mac-Function-Keys/commit/${{ steps.upstream.outputs.sha }})
+          files: Fn.Toggle.alfredworkflow
